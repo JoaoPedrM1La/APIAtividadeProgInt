@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biblioteca</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        form {
+            max-width: 300px;
+        }
+
+        input[type="text"] {
+            display: block;
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        ul#output {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        ul#output li {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <h1>Biblioteca</h1>
+    <input type="button" value="Criar Banco" id="conectar_BD">
+    <input type="button" value="Criar Table" id="conectar_TBL">
+    <form id="form">
+        <input type="text" id="inputName" placeholder="Nome">
+        <input type="text" id="inputText" placeholder="Texto">
+        <input type="submit" value="Salvar" id="salvar" onclick="enviarDados()">
+        <input type="button" value="Mostrar" id="mostrar">
+    </form>
+
+    <br><ul id="output"></ul>
+
+    <script>
+        document.getElementById('form').addEventListener('submit', async(e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('inputName').value;
+            const text = document.getElementById('inputText').value;
+
+            try {
+                const result = await fetch('http://localhost:3000/enviar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, text })
+                });
+
+                if(!result.ok) {
+                    throw new Error('Falha no registro');
+                };
+
+                console.log('Registrado!');
+                document.getElementById('form').reset();
+            } catch (error) {
+                console.log(error);
+            }
+        })
+
+        document.getElementById('mostrar').addEventListener('click', async(e) => {
+            e.preventDefault();
+
+            try {
+                const result = await fetch('http://localhost:3000/mostrar', {
+                    method: 'GET'
+                });
+
+                if(!result.ok) {
+                    throw new Error('Falha no resgate de dados');
+                }
+
+                const dados = await result.json();
+
+                const lista = document.getElementById('output');
+                lista.innerHTML = '';
+                dados.forEach(livro => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `${livro.name}:<br>${livro.text}`;
+                    lista.appendChild(li);
+                });
+            } catch (error) {
+                console.log(error);
+            }
+        });
+
+        document.getElementById('conectar_BD').addEventListener('click', async(e) => {
+            e.preventDefault();
+
+            try {
+                const result = await fetch('http://localhost:3000/setup/db', {
+                    method: 'GET'
+                });
+
+                if(!result.ok) {
+                    throw new Error('Falha na criação do banco');
+                }
+            } catch (error) {
+                console.log(error);
+            }
+        });
+
+        document.getElementById('conectar_TBL').addEventListener('click', async(e) => {
+            e.preventDefault();
+
+            try {
+                const result = await fetch('http://localhost:3000/setup/tbl', {
+                    method: 'GET'
+                });
+
+                if(!result.ok) {
+                    throw new Error('Falha na criação da tabela');
+                }
+            } catch (error) {
+                console.log(error);
+            }
+        });
+    </script>
+</body>
+</html>
