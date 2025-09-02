@@ -16,7 +16,7 @@ export const criarDB = async (req, res) => {
 
 export const criarTBL = async (req, res) => {
     try {
-        await pool.query('CREATE TABLE livros( id SERIAL PRIMARY KEY, name VARCHAR(100),text TEXT)');
+        await pool.query('CREATE TABLE livros( id SERIAL PRIMARY KEY, name VARCHAR(100), cpf INT, email VARCHAR(100), school VARCHAR(255), address VARCHAR(255))');
     } catch (error) {
         console.log(error);
         res.sendStatus(500);
@@ -45,9 +45,9 @@ export const mostrarDadosEspec = async (req, res) => {
 }
 
 export const enviarDados = async (req, res) => {
-    const { name, text } = req.body;
+    const { name, cpf, email, school, address } = req.body;
     try {
-        await pool.query('INSERT INTO livros (name, text) VALUES ($1, $2)', [name, text]);
+        await pool.query('INSERT INTO livros (name, cpf, email, school, address) VALUES ($1, $2, $3, $4, $5)', [name, cpf, email, school, address]);
         res.status(200).send({
             message: "Texto salvo"
         });
@@ -72,9 +72,9 @@ export const deletarDados = async (req, res) => {
 
 export const atualizarDados = async (req, res) => {
     const { id } = req.params;
-    const { nome, telefone, email, idade } = req.body;
+    const { name, cpf, email, school, address } = req.body;
     try {
-        await pool.query('UPDATE livros SET nome = $1, telefone = $2, email = $3, idade = $4 WHERE id = $5', [nome, telefone, email, idade, id]);
+        await pool.query('UPDATE livros SET name = $1, cpf = $2, email = $3, school = $4, address = $5 WHERE id = $6', [name, cpf, email, school, address, id]);
         res.status(200).send({
             message: "Texto atualizado"
         });

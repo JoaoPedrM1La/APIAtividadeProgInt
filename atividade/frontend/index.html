@@ -46,7 +46,10 @@
     <form id="form">
         <input type="text" id="inputID", placeholder="ID (para edição)">
         <input type="text" id="inputName" placeholder="Nome">
-        <input type="text" id="inputText" placeholder="Texto">
+        <input type="text" id="inputCPF" placeholder="CPF">
+        <input type="text" id="inputEmail" placeholder="Email">
+        <input type="text" id="inputEscola" placeholder="Escola">
+        <input type="text" id="inputEndereco" placeholder="Endereço">
         <input type="submit" value="Salvar" id="salvar" onclick="enviarDados()">
         <input type="button" value="Mostrar" id="mostrar">
         <input type="button" value="Alterar" id="alterar">
@@ -62,7 +65,10 @@
         function limparFormulario() {
             document.getElementById('inputID').value = '';
             document.getElementById('inputName').value = '';
-            document.getElementById('inputText').value = '';
+            document.getElementById('inputCPF').value = '';
+            document.getElementById('inputEmail').value = '';
+            document.getElementById('inputEscola').value = '';
+            document.getElementById('inputEndereco').value = '';
         }
 
         document.getElementById('conectar_BD').addEventListener('click', async(e) => {
@@ -101,13 +107,16 @@
             e.preventDefault();
 
             const name = document.getElementById('inputName').value;
-            const text = document.getElementById('inputText').value;
+            const cpf = document.getElementById('inputCPF').value;
+            const email = document.getElementById('inputEmail').value;
+            const school = document.getElementById('inputEscola').value;
+            const address = document.getElementById('inputEndereco').value;
 
             try {
                 const result = await fetch('http://localhost:3000/enviar', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, text })
+                    body: JSON.stringify({ name, cpf, email, school, address })
                 });
 
                 if(!result.ok) {
@@ -139,7 +148,7 @@
                 lista.innerHTML = '';
                 dados.forEach(livro => {
                     const li = document.createElement('li');
-                    li.innerHTML = `ID: ${livro.id} - ${livro.name}:<br>${livro.text}`;
+                    li.innerHTML = `ID: ${livro.id}<br>${livro.name}  ${livro.cpf}  ${livro.email}<br>${livro.school}  ${livro.address}`;
                     lista.appendChild(li);
                 });
             } catch (error) {
@@ -204,7 +213,10 @@
                     const livro = await response.json();
                     
                     document.getElementById('inputName').value = livro.name;
-                    document.getElementById('inputText').value = livro.text;
+                    document.getElementById('inputCPF').value = livro.cpf;
+                    document.getElementById('inputEmail').value = livro.email;
+                    document.getElementById('inputEscola').value = livro.school;
+                    document.getElementById('inputEndereco').value = livro.address;
                     
                     // Mudar para modo de edição
                     modoEdicao = true;
@@ -215,7 +227,10 @@
                 } else {
                     // Modo de atualização - enviar dados alterados
                     const name = document.getElementById('inputName').value;
-                    const text = document.getElementById('inputText').value;
+                    const cpf = document.getElementById('inputCPF').value;
+                    const email = document.getElementById('inputEmail').value;
+                    const school = document.getElementById('inputEscola').value;
+                    const address = document.getElementById('inputEndereco').value;
                     
                     if (!name || !text) {
                         alert('Por favor, preencha todos os campos');
