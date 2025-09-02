@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Biblioteca</title>
+    <title>Sistema Biblioteca</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -44,64 +44,26 @@
     <input type="button" value="Criar Banco" id="conectar_BD">
     <input type="button" value="Criar Table" id="conectar_TBL">
     <form id="form">
+        <input type="text" id="inputID", placeholder="ID (para edição)">
         <input type="text" id="inputName" placeholder="Nome">
         <input type="text" id="inputText" placeholder="Texto">
         <input type="submit" value="Salvar" id="salvar" onclick="enviarDados()">
         <input type="button" value="Mostrar" id="mostrar">
+        <input type="button" value="Alterar" id="alterar">
+        <input type="button" value="Exluir" id="excluir">
     </form>
 
     <br><ul id="output"></ul>
 
     <script>
-        document.getElementById('form').addEventListener('submit', async(e) => {
-            e.preventDefault();
+        let modoEdicao = false;
+        let livroAtualId = null;
 
-            const name = document.getElementById('inputName').value;
-            const text = document.getElementById('inputText').value;
-
-            try {
-                const result = await fetch('http://localhost:3000/enviar', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, text })
-                });
-
-                if(!result.ok) {
-                    throw new Error('Falha no registro');
-                };
-
-                console.log('Registrado!');
-                document.getElementById('form').reset();
-            } catch (error) {
-                console.log(error);
-            }
-        })
-
-        document.getElementById('mostrar').addEventListener('click', async(e) => {
-            e.preventDefault();
-
-            try {
-                const result = await fetch('http://localhost:3000/mostrar', {
-                    method: 'GET'
-                });
-
-                if(!result.ok) {
-                    throw new Error('Falha no resgate de dados');
-                }
-
-                const dados = await result.json();
-
-                const lista = document.getElementById('output');
-                lista.innerHTML = '';
-                dados.forEach(livro => {
-                    const li = document.createElement('li');
-                    li.innerHTML = `${livro.name}:<br>${livro.text}`;
-                    lista.appendChild(li);
-                });
-            } catch (error) {
-                console.log(error);
-            }
-        });
+        function limparFormulario() {
+            document.getElementById('inputID').value = '';
+            document.getElementById('inputName').value = '';
+            document.getElementById('inputText').value = '';
+        }
 
         document.getElementById('conectar_BD').addEventListener('click', async(e) => {
             e.preventDefault();
@@ -132,6 +94,165 @@
                 }
             } catch (error) {
                 console.log(error);
+            }
+        });
+
+        document.getElementById('form').addEventListener('submit', async(e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('inputName').value;
+            const text = document.getElementById('inputText').value;
+
+            try {
+                const result = await fetch('http://localhost:3000/enviar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, text })
+                });
+
+                if(!result.ok) {
+                    throw new Error('Falha no registro');
+                };
+
+                console.log('Registrado!');
+                document.getElementById('form').reset();
+            } catch (error) {
+                console.log(error);
+            }
+        });
+
+        document.getElementById('mostrar').addEventListener('click', async(e) => {
+            e.preventDefault();
+
+            try {
+                const result = await fetch('http://localhost:3000/mostrar', {
+                    method: 'GET'
+                });
+
+                if(!result.ok) {
+                    throw new Error('Falha no resgate de dados');
+                }
+
+                const dados = await result.json();
+
+                const lista = document.getElementById('output');
+                lista.innerHTML = '';
+                dados.forEach(livro => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `ID: ${livro.id} - ${livro.name}:<br>${livro.text}`;
+                    lista.appendChild(li);
+                });
+            } catch (error) {
+                console.log(error);
+            }
+        });
+
+        document.getElementById('excluir').addEventListener('click', async(e) => {
+            e.preventDefault();
+            const id = document.getElementById('inputID').value;
+            
+            if (!id) {
+                alert('Por favor, digite um ID para excluir');
+                return;
+            }
+            
+            if (!confirm(`Tem certeza que deseja excluir o livro com ID ${id}?`)) {
+                return;
+            }
+            
+            try {
+                const result = await fetch(`http://localhost:3000/deletar/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (!result.ok) {
+                    throw new Error('Falha ao excluir');
+                }
+
+                alert('Livro excluído com sucesso!');
+                limparFormulario();
+                // Recarregar a lista de livros
+                document.getElementById('mostrar').click();
+            } catch (error) {
+                console.error(error);
+                alert('Erro ao excluir livro');
+            }
+        });
+
+        document.getElementById('alterar').addEventListener('click', async(e) => {
+            e.preventDefault();
+            const id = document.getElementById('inputID').value;
+
+            if (!id) {
+                alert('Por favor, digite um ID');
+                return;
+            }
+
+            try {
+                if (!modoEdicao) {
+                    // Modo de carregamento - buscar dados do livro
+                    const response = await fetch(`http://localhost:3000/mostrar/${id}`);
+                    
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            throw new Error('Livro não encontrado com este ID');
+                        } else {
+                            throw new Error('Erro ao carregar livro');
+                        }
+                    }
+                    
+                    const livro = await response.json();
+                    
+                    document.getElementById('inputName').value = livro.name;
+                    document.getElementById('inputText').value = livro.text;
+                    
+                    // Mudar para modo de edição
+                    modoEdicao = true;
+                    livroAtualId = id;
+                    document.getElementById('alterar').value = 'Atualizar';
+                    
+                    alert('Dados carregados! Edite os campos e clique em "Atualizar"');
+                } else {
+                    // Modo de atualização - enviar dados alterados
+                    const name = document.getElementById('inputName').value;
+                    const text = document.getElementById('inputText').value;
+                    
+                    if (!name || !text) {
+                        alert('Por favor, preencha todos os campos');
+                        return;
+                    }
+                    
+                    const response = await fetch(`http://localhost:3000/alterar/${livroAtualId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ name, text })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Erro ao atualizar livro');
+                    }
+                    
+                    alert('Livro atualizado com sucesso!');
+                    
+                    // Voltar ao modo normal
+                    modoEdicao = false;
+                    livroAtualId = null;
+                    document.getElementById('alterar').value = 'Alterar';
+                    limparFormulario();
+                    
+                    // Atualizar a lista de livros
+                    document.getElementById('mostrar').click();
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro: ' + error.message);
+                
+                // Em caso de erro, voltar ao modo normal
+                modoEdicao = false;
+                livroAtualId = null;
+                document.getElementById('alterar').value = 'Alterar';
             }
         });
     </script>
